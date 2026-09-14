@@ -94,23 +94,29 @@ end)
 -- Fetch Game Meta
 local ExperienceName = "Universal Experience" 
 
--- =================== MODERN OBSIDIAN PALETTE ===================
+-- ==================== OBSIDIAN NOIR PALETTE ====================
 local Colors = {
-    Background    = Color3.fromRGB(13, 15, 20),
-    Surface       = Color3.fromRGB(19, 22, 30),
-    SurfaceRaised = Color3.fromRGB(26, 30, 42),
-    Border        = Color3.fromRGB(36, 42, 58),
+    Void          = Color3.fromRGB(11, 13, 19),
+    Surface       = Color3.fromRGB(16, 19, 28),
+    SurfaceRaised = Color3.fromRGB(24, 29, 42),
+    Border        = Color3.fromRGB(32, 38, 54),
     BorderActive  = Color3.fromRGB(99, 102, 241),
-    Accent        = Color3.fromRGB(99, 102, 241),       -- Clean Indigo
-    AccentHover   = Color3.fromRGB(129, 140, 248),
-    Success       = Color3.fromRGB(34, 197, 94),        -- Emerald
-    SuccessHover  = Color3.fromRGB(22, 163, 74),
-    Warning       = Color3.fromRGB(234, 179, 8),
+    Accent        = Color3.fromRGB(79, 70, 229),
+    AccentHover   = Color3.fromRGB(99, 102, 241),
+    Success       = Color3.fromRGB(16, 185, 129),
+    SuccessMuted  = Color3.fromRGB(6, 78, 59),
+    SuccessText   = Color3.fromRGB(110, 231, 183),
+    CyanMuted     = Color3.fromRGB(12, 74, 110),
+    CyanText      = Color3.fromRGB(125, 211, 252),
+    Warning       = Color3.fromRGB(245, 158, 11),
     Danger        = Color3.fromRGB(239, 68, 68),
+    TextTitle     = Color3.fromRGB(255, 255, 255),
     TextPrimary   = Color3.fromRGB(243, 244, 246),
     TextSecondary = Color3.fromRGB(156, 163, 175),
     TextMuted     = Color3.fromRGB(107, 114, 128)
 }
+
+Colors.Background = Colors.Void
 
 -- ==================== SCREEN GUI CONSTRUCT ====================
 local ScreenGui = Instance.new("ScreenGui")
@@ -118,12 +124,13 @@ ScreenGui.Name = ROOT_TAG
 ScreenGui.ResetOnSpawn = false
 ScreenGui.DisplayOrder = 999999
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Enabled = true
 ScreenGui:SetAttribute("UniversalHopper", true)
 
 if syn and typeof(syn.protect_gui) == "function" then
-   pcall(syn.protect_gui, ScreenGui)
+    pcall(syn.protect_gui, ScreenGui)
 end
-ScreenGui.Enabled = true
+
 local parented = false
 pcall(function()
     ScreenGui.Parent = targetContainer
@@ -136,22 +143,20 @@ if not parented or ScreenGui.Parent == nil then
     end)
 end
 
--- Visual confirmation notification
 pcall(function()
     game:GetService("StarterGui"):SetCore("SendNotification", {
         Title = "Server Hopper",
-        Text = "Interface initialized. Press RightShift to toggle.",
+        Text = "Interface ready. Press RightShift to toggle.",
         Duration = 3
     })
 end)
 
--- Main Window
 local MainWindow = Instance.new("Frame")
 MainWindow.Name = INSTANCE_ID
 MainWindow.AnchorPoint = Vector2.new(0.5, 0.5)
-MainWindow.Size = UDim2.new(0, 390, 0, 380)
+MainWindow.Size = UDim2.new(0, 440, 0, 390)
 MainWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
-MainWindow.BackgroundColor3 = Colors.Background
+MainWindow.BackgroundColor3 = Colors.Void
 MainWindow.BorderSizePixel = 0
 MainWindow.ClipsDescendants = true
 MainWindow.Visible = true
@@ -165,42 +170,102 @@ pcall(function()
 end)
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 8)
+MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = MainWindow
 
--- =================== HEADER (DRAGGABLE) ===================
+local TopGlow = Instance.new("Frame")
+TopGlow.Name = "TopGlow"
+TopGlow.Size = UDim2.new(1, 0, 0, 2)
+TopGlow.Position = UDim2.new(0, 0, 0, 0)
+TopGlow.BackgroundColor3 = Colors.AccentHover
+TopGlow.BackgroundTransparency = 0.2
+TopGlow.BorderSizePixel = 0
+TopGlow.Parent = MainWindow
+
+-- ==================== HEADER ====================
 local TopBar = Instance.new("Frame")
 TopBar.Name = "TopBar"
-TopBar.Size = UDim2.new(1, 0, 0, 42)
+TopBar.Size = UDim2.new(1, 0, 0, 44)
 TopBar.BackgroundColor3 = Colors.Surface
 TopBar.BorderSizePixel = 0
 TopBar.Parent = MainWindow
 
-local TopBarStroke = Instance.new("Frame")
-TopBarStroke.Size = UDim2.new(1, 0, 0, 1)
-TopBarStroke.Position = UDim2.new(0, 0, 1, -1)
-TopBarStroke.BackgroundColor3 = Colors.Border
-TopBarStroke.BorderSizePixel = 0
-TopBarStroke.Parent = TopBar
+local TopBarDivider = Instance.new("Frame")
+TopBarDivider.Size = UDim2.new(1, 0, 0, 1)
+TopBarDivider.Position = UDim2.new(0, 0, 1, -1)
+TopBarDivider.BackgroundColor3 = Colors.Border
+TopBarDivider.BorderSizePixel = 0
+TopBarDivider.Parent = TopBar
+
+local LogoBadge = Instance.new("Frame")
+LogoBadge.Size = UDim2.new(0, 22, 0, 22)
+LogoBadge.Position = UDim2.new(0, 12, 0.5, -11)
+LogoBadge.BackgroundColor3 = Colors.Accent
+LogoBadge.BorderSizePixel = 0
+LogoBadge.Parent = TopBar
+
+local LogoCorner = Instance.new("UICorner")
+LogoCorner.CornerRadius = UDim.new(0, 5)
+LogoCorner.Parent = LogoBadge
+
+local LogoText = Instance.new("TextLabel")
+LogoText.Size = UDim2.new(1, 0, 1, 0)
+LogoText.BackgroundTransparency = 1
+LogoText.Font = Enum.Font.GothamBold
+LogoText.Text = "H"
+LogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
+LogoText.TextSize = 12
+LogoText.Parent = LogoBadge
 
 local HeaderTitle = Instance.new("TextLabel")
-HeaderTitle.Size = UDim2.new(1, -140, 0, 20)
-HeaderTitle.Position = UDim2.new(0, 14, 0, 4)
+HeaderTitle.Size = UDim2.new(0, 115, 0, 18)
+HeaderTitle.Position = UDim2.new(0, 40, 0, 6)
 HeaderTitle.BackgroundTransparency = 1
 HeaderTitle.Font = Enum.Font.GothamBold
-HeaderTitle.Text = "Server Hopper"
-HeaderTitle.TextColor3 = Colors.TextPrimary
-HeaderTitle.TextSize = 13
+HeaderTitle.Text = "SERVER HOPPER"
+HeaderTitle.TextColor3 = Colors.TextTitle
+HeaderTitle.TextSize = 12
 HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
 HeaderTitle.Parent = TopBar
 
+local ProPill = Instance.new("Frame")
+ProPill.Size = UDim2.new(0, 28, 0, 14)
+ProPill.Position = UDim2.new(0, 160, 0, 8)
+ProPill.BackgroundColor3 = Color3.fromRGB(49, 46, 129)
+ProPill.BorderSizePixel = 0
+ProPill.Parent = TopBar
+
+local ProCorner = Instance.new("UICorner")
+ProCorner.CornerRadius = UDim.new(0, 4)
+ProCorner.Parent = ProPill
+
+local ProLabel = Instance.new("TextLabel")
+ProLabel.Size = UDim2.new(1, 0, 1, 0)
+ProLabel.BackgroundTransparency = 1
+ProLabel.Font = Enum.Font.GothamBold
+ProLabel.Text = "PRO"
+ProLabel.TextColor3 = Color3.fromRGB(199, 210, 254)
+ProLabel.TextSize = 8
+ProLabel.Parent = ProPill
+
+local LiveDot = Instance.new("Frame")
+LiveDot.Size = UDim2.new(0, 5, 0, 5)
+LiveDot.Position = UDim2.new(0, 41, 0, 28)
+LiveDot.BackgroundColor3 = Colors.Success
+LiveDot.BorderSizePixel = 0
+LiveDot.Parent = TopBar
+
+local LiveDotCorner = Instance.new("UICorner")
+LiveDotCorner.CornerRadius = UDim.new(1, 0)
+LiveDotCorner.Parent = LiveDot
+
 local HeaderSubtitle = Instance.new("TextLabel")
-HeaderSubtitle.Size = UDim2.new(1, -140, 0, 14)
-HeaderSubtitle.Position = UDim2.new(0, 14, 0, 22)
+HeaderSubtitle.Size = UDim2.new(1, -180, 0, 14)
+HeaderSubtitle.Position = UDim2.new(0, 52, 0, 23)
 HeaderSubtitle.BackgroundTransparency = 1
 HeaderSubtitle.Font = Enum.Font.Gotham
-HeaderSubtitle.Text = ExperienceName
-HeaderSubtitle.TextColor3 = Colors.TextMuted
+HeaderSubtitle.Text = "Universal Experience"
+HeaderSubtitle.TextColor3 = Colors.TextSecondary
 HeaderSubtitle.TextSize = 10
 HeaderSubtitle.TextTruncate = Enum.TextTruncate.AtEnd
 HeaderSubtitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -215,15 +280,14 @@ task.spawn(function()
     end)
 end)
 
--- Window Controls (Minimize & Close)
 local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0, 28, 0, 28)
-CloseButton.Position = UDim2.new(1, -34, 0, 7)
+CloseButton.Size = UDim2.new(0, 26, 0, 26)
+CloseButton.Position = UDim2.new(1, -34, 0.5, -13)
 CloseButton.BackgroundColor3 = Colors.SurfaceRaised
 CloseButton.Font = Enum.Font.GothamMedium
 CloseButton.Text = "x"
 CloseButton.TextColor3 = Colors.TextSecondary
-CloseButton.TextSize = 12
+CloseButton.TextSize = 11
 CloseButton.BorderSizePixel = 0
 CloseButton.Parent = TopBar
 
@@ -245,13 +309,13 @@ end)
 
 local isMinimized = false
 local MinButton = Instance.new("TextButton")
-MinButton.Size = UDim2.new(0, 28, 0, 28)
-MinButton.Position = UDim2.new(1, -66, 0, 7)
+MinButton.Size = UDim2.new(0, 26, 0, 26)
+MinButton.Position = UDim2.new(1, -66, 0.5, -13)
 MinButton.BackgroundColor3 = Colors.SurfaceRaised
 MinButton.Font = Enum.Font.GothamBold
 MinButton.Text = "-"
 MinButton.TextColor3 = Colors.TextSecondary
-MinButton.TextSize = 13
+MinButton.TextSize = 12
 MinButton.BorderSizePixel = 0
 MinButton.Parent = TopBar
 
@@ -261,12 +325,11 @@ MinCorner.Parent = MinButton
 
 MinButton.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
-    local targetSize = isMinimized and UDim2.new(0, 390, 0, 40) or UDim2.new(0, 390, 0, 380)
+    local targetSize = isMinimized and UDim2.new(0, 440, 0, 44) or UDim2.new(0, 440, 0, 390)
     TweenService:Create(MainWindow, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = targetSize}):Play()
     MinButton.Text = isMinimized and "+" or "-"
 end)
 
--- Draggable Logic (Mouse & Mobile Touch)
 local isDragging = false
 local dragStart = Vector2.zero
 local startPos = UDim2.new()
@@ -296,11 +359,11 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- =================== NAVIGATION TABS ===================
+-- ==================== NAVIGATION TABS ====================
 local NavFrame = Instance.new("Frame")
 NavFrame.Name = "Navigation"
-NavFrame.Size = UDim2.new(1, -20, 0, 28)
-NavFrame.Position = UDim2.new(0, 10, 0, 46)
+NavFrame.Size = UDim2.new(1, -24, 0, 30)
+NavFrame.Position = UDim2.new(0, 12, 0, 50)
 NavFrame.BackgroundColor3 = Colors.Surface
 NavFrame.BorderSizePixel = 0
 NavFrame.Parent = MainWindow
@@ -308,6 +371,7 @@ NavFrame.Parent = MainWindow
 local NavCorner = Instance.new("UICorner")
 NavCorner.CornerRadius = UDim.new(0, 6)
 NavCorner.Parent = NavFrame
+
 local TabButtons = {}
 local TabPages = {}
 local activeTab = "hop"
@@ -315,13 +379,13 @@ local activeTab = "hop"
 local function createTabButton(name, label, index)
     local btn = Instance.new("TextButton")
     btn.Name = "Tab_" .. name
-    btn.Size = UDim2.new(0.333, -4, 1, -4)
+    btn.Size = UDim2.new(0.333, -3, 1, -4)
     btn.Position = UDim2.new((index - 1) * 0.333, 2, 0, 2)
     btn.BackgroundColor3 = (name == activeTab) and Colors.SurfaceRaised or Color3.fromRGB(0, 0, 0)
     btn.BackgroundTransparency = (name == activeTab) and 0 or 1
     btn.Font = Enum.Font.GothamMedium
     btn.Text = label
-    btn.TextColor3 = (name == activeTab) and Colors.TextPrimary or Colors.TextMuted
+    btn.TextColor3 = (name == activeTab) and Colors.TextTitle or Colors.TextMuted
     btn.TextSize = 11
     btn.BorderSizePixel = 0
     btn.Parent = NavFrame
@@ -334,14 +398,14 @@ local function createTabButton(name, label, index)
     return btn
 end
 
-createTabButton("hop", "Quick Hop", 1)
+createTabButton("hop", "Fast Hop", 1)
 createTabButton("servers", "Server List", 2)
 createTabButton("tools", "Settings", 3)
 
 local Viewport = Instance.new("Frame")
 Viewport.Name = "Viewport"
-Viewport.Size = UDim2.new(1, -20, 1, -114)
-Viewport.Position = UDim2.new(0, 10, 0, 80)
+Viewport.Size = UDim2.new(1, -24, 1, -122)
+Viewport.Position = UDim2.new(0, 12, 0, 86)
 Viewport.BackgroundTransparency = 1
 Viewport.Parent = MainWindow
 
@@ -370,7 +434,7 @@ local function switchTab(tabName)
         TweenService:Create(btn, TweenInfo.new(0.15), {
             BackgroundTransparency = isCurrent and 0 or 1,
             BackgroundColor3 = isCurrent and Colors.SurfaceRaised or Color3.fromRGB(0, 0, 0),
-            TextColor3 = isCurrent and Colors.TextPrimary or Colors.TextMuted
+            TextColor3 = isCurrent and Colors.TextTitle or Colors.TextMuted
         }):Play()
     end
 end
@@ -381,17 +445,17 @@ for name, btn in pairs(TabButtons) do
     end)
 end
 
--- =================== STATUS STRIP ===================
+-- ==================== STATUS FOOTER ====================
 local StatusCard = Instance.new("Frame")
 StatusCard.Name = "StatusStrip"
-StatusCard.Size = UDim2.new(1, -20, 0, 24)
-StatusCard.Position = UDim2.new(0, 10, 1, -28)
+StatusCard.Size = UDim2.new(1, -24, 0, 24)
+StatusCard.Position = UDim2.new(0, 12, 1, -28)
 StatusCard.BackgroundColor3 = Colors.Surface
 StatusCard.BorderSizePixel = 0
 StatusCard.Parent = MainWindow
 
 local StatusCorner = Instance.new("UICorner")
-StatusCorner.CornerRadius = UDim.new(0, 6)
+StatusCorner.CornerRadius = UDim.new(0, 5)
 StatusCorner.Parent = StatusCard
 
 local StatusIndicator = Instance.new("Frame")
@@ -406,11 +470,11 @@ IndicatorCorner.CornerRadius = UDim.new(1, 0)
 IndicatorCorner.Parent = StatusIndicator
 
 local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Size = UDim2.new(1, -30, 1, 0)
+StatusLabel.Size = UDim2.new(1, -28, 1, 0)
 StatusLabel.Position = UDim2.new(0, 22, 0, 0)
 StatusLabel.BackgroundTransparency = 1
 StatusLabel.Font = Enum.Font.Gotham
-StatusLabel.Text = "Idle — Ready to scan"
+StatusLabel.Text = "System ready -- Waiting for input"
 StatusLabel.TextColor3 = Colors.TextSecondary
 StatusLabel.TextSize = 10
 StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -421,52 +485,80 @@ local function setStatus(msg, color)
     StatusIndicator.BackgroundColor3 = color or Colors.TextMuted
 end
 
--- =================== TAB 1: QUICK HOP ===================
+-- ==================== TAB 1: FAST HOP ====================
 local AutoHopBtn = Instance.new("TextButton")
 AutoHopBtn.Name = "AutoHopBtn"
-AutoHopBtn.Size = UDim2.new(1, 0, 0, 44)
-AutoHopBtn.Position = UDim2.new(0, 0, 0, 4)
+AutoHopBtn.Size = UDim2.new(1, 0, 0, 46)
+AutoHopBtn.Position = UDim2.new(0, 0, 0, 2)
 AutoHopBtn.BackgroundColor3 = Colors.Accent
 AutoHopBtn.Font = Enum.Font.GothamBold
 AutoHopBtn.Text = "Hop to Smallest Server"
 AutoHopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-AutoHopBtn.TextSize = 12
+AutoHopBtn.TextSize = 13
 AutoHopBtn.BorderSizePixel = 0
 AutoHopBtn.Parent = PageHop
 
 local AutoHopCorner = Instance.new("UICorner")
-AutoHopCorner.CornerRadius = UDim.new(0, 6)
+AutoHopCorner.CornerRadius = UDim.new(0, 7)
 AutoHopCorner.Parent = AutoHopBtn
 
+local AutoHopSub = Instance.new("TextLabel")
+AutoHopSub.Size = UDim2.new(1, 0, 0, 14)
+AutoHopSub.Position = UDim2.new(0, 0, 1, -16)
+AutoHopSub.BackgroundTransparency = 1
+AutoHopSub.Font = Enum.Font.Gotham
+AutoHopSub.Text = "Instant matchmaking - Auto-picks lowest player instance"
+AutoHopSub.TextColor3 = Color3.fromRGB(199, 210, 254)
+AutoHopSub.TextSize = 9
+AutoHopSub.Parent = AutoHopBtn
+
 AutoHopBtn.MouseEnter:Connect(function()
-    TweenService:Create(AutoHopBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.AccentHover}):Play()
+    TweenService:Create(AutoHopBtn, TweenInfo.new(0.12), {BackgroundColor3 = Colors.AccentHover}):Play()
 end)
 AutoHopBtn.MouseLeave:Connect(function()
-    TweenService:Create(AutoHopBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Accent}):Play()
+    TweenService:Create(AutoHopBtn, TweenInfo.new(0.12), {BackgroundColor3 = Colors.Accent}):Play()
 end)
 
 -- Filter Range Card
 local FilterCard = Instance.new("Frame")
-FilterCard.Size = UDim2.new(1, 0, 0, 64)
-FilterCard.Position = UDim2.new(0, 0, 0, 56)
+FilterCard.Size = UDim2.new(1, 0, 0, 56)
+FilterCard.Position = UDim2.new(0, 0, 0, 54)
 FilterCard.BackgroundColor3 = Colors.Surface
 FilterCard.BorderSizePixel = 0
 FilterCard.Parent = PageHop
 
 local FilterCardCorner = Instance.new("UICorner")
-FilterCardCorner.CornerRadius = UDim.new(0, 6)
+FilterCardCorner.CornerRadius = UDim.new(0, 7)
 FilterCardCorner.Parent = FilterCard
 
+pcall(function()
+    local s = Instance.new("UIStroke")
+    s.Color = Colors.Border
+    s.Thickness = 1
+    s.Parent = FilterCard
+end)
+
 local FilterTitle = Instance.new("TextLabel")
-FilterTitle.Size = UDim2.new(1, -20, 0, 18)
-FilterTitle.Position = UDim2.new(0, 10, 0, 8)
+FilterTitle.Size = UDim2.new(0, 150, 0, 16)
+FilterTitle.Position = UDim2.new(0, 10, 0, 6)
 FilterTitle.BackgroundTransparency = 1
-FilterTitle.Font = Enum.Font.GothamMedium
-FilterTitle.Text = "Target Player Threshold"
-FilterTitle.TextColor3 = Colors.TextPrimary
-FilterTitle.TextSize = 11
+FilterTitle.Font = Enum.Font.GothamBold
+FilterTitle.Text = "PLAYER THRESHOLD"
+FilterTitle.TextColor3 = Colors.TextMuted
+FilterTitle.TextSize = 9
 FilterTitle.TextXAlignment = Enum.TextXAlignment.Left
 FilterTitle.Parent = FilterCard
+
+local FilterHint = Instance.new("TextLabel")
+FilterHint.Size = UDim2.new(0, 160, 0, 16)
+FilterHint.Position = UDim2.new(1, -170, 0, 6)
+FilterHint.BackgroundTransparency = 1
+FilterHint.Font = Enum.Font.Gotham
+FilterHint.Text = "Auto-expands if empty"
+FilterHint.TextColor3 = Colors.Success
+FilterHint.TextSize = 9
+FilterHint.TextXAlignment = Enum.TextXAlignment.Right
+FilterHint.Parent = FilterCard
 
 local presets = {
     {id = "1",    label = "1 Solo", min = 1, max = 1},
@@ -477,16 +569,16 @@ local presets = {
 }
 
 local presetBtns = {}
-local btnWidth = (396 - (4 * 6)) / 5
+local btnWidth = (416 - 20 - (4 * 5)) / 5
 
 for i, p in ipairs(presets) do
     local pBtn = Instance.new("TextButton")
-    pBtn.Size = UDim2.new(0, btnWidth, 0, 24)
-    pBtn.Position = UDim2.new(0, 10 + (i - 1) * (btnWidth + 5), 0, 30)
-    pBtn.BackgroundColor3 = (p.max == Config.MaxPlayers and p.min == Config.MinPlayers) and Colors.SurfaceRaised or Colors.Background
-    pBtn.Font = Enum.Font.Gotham
+    pBtn.Size = UDim2.new(0, btnWidth, 0, 22)
+    pBtn.Position = UDim2.new(0, 10 + (i - 1) * (btnWidth + 5), 0, 26)
+    pBtn.BackgroundColor3 = (p.max == Config.MaxPlayers and p.min == Config.MinPlayers) and Colors.SurfaceRaised or Colors.Void
+    pBtn.Font = Enum.Font.GothamMedium
     pBtn.Text = p.label
-    pBtn.TextColor3 = (p.max == Config.MaxPlayers and p.min == Config.MinPlayers) and Colors.TextPrimary or Colors.TextMuted
+    pBtn.TextColor3 = (p.max == Config.MaxPlayers and p.min == Config.MinPlayers) and Colors.TextTitle or Colors.TextMuted
     pBtn.TextSize = 10
     pBtn.BorderSizePixel = 0
     pBtn.Parent = FilterCard
@@ -495,82 +587,197 @@ for i, p in ipairs(presets) do
     pCorner.CornerRadius = UDim.new(0, 4)
     pCorner.Parent = pBtn
 
-    local pStroke = Instance.new("UIStroke")
-    pStroke.Color = (p.max == Config.MaxPlayers and p.min == Config.MinPlayers) and Colors.Accent or Colors.Border
-    pStroke.Thickness = 1
-    pStroke.Parent = pBtn
+    pcall(function()
+        local pStroke = Instance.new("UIStroke")
+        pStroke.Color = (p.max == Config.MaxPlayers and p.min == Config.MinPlayers) and Colors.AccentHover or Colors.Border
+        pStroke.Thickness = 1
+        pStroke.Parent = pBtn
+    end)
 
     pBtn.MouseButton1Click:Connect(function()
         Config.MinPlayers = p.min
         Config.MaxPlayers = p.max
         for _, btn in pairs(presetBtns) do
-            btn.BackgroundColor3 = Colors.Background
+            btn.BackgroundColor3 = Colors.Void
             btn.TextColor3 = Colors.TextMuted
             local s = btn:FindFirstChildOfClass("UIStroke")
             if s then s.Color = Colors.Border end
         end
         pBtn.BackgroundColor3 = Colors.SurfaceRaised
-        pBtn.TextColor3 = Colors.TextPrimary
-        pStroke.Color = Colors.Accent
-        setStatus(string.format("Threshold: %d to %d players", p.min, p.max), Colors.Accent)
+        pBtn.TextColor3 = Colors.TextTitle
+        local s = pBtn:FindFirstChildOfClass("UIStroke")
+        if s then s.Color = Colors.AccentHover end
+        setStatus(string.format("Threshold: %d to %d players", p.min, p.max), Colors.AccentHover)
     end)
 
     table.insert(presetBtns, pBtn)
 end
--- Info Block (Telemetry / Current Instance)
-local InfoBlock = Instance.new("Frame")
-InfoBlock.Size = UDim2.new(1, 0, 1, -128)
-InfoBlock.Position = UDim2.new(0, 0, 0, 128)
-InfoBlock.BackgroundColor3 = Colors.Surface
-InfoBlock.BorderSizePixel = 0
-InfoBlock.Parent = PageHop
 
-local InfoCorner = Instance.new("UICorner")
-InfoCorner.CornerRadius = UDim.new(0, 6)
-InfoCorner.Parent = InfoBlock
+-- Telemetry Dual Cards Grid (Side-by-Side)
+local GridContainer = Instance.new("Frame")
+GridContainer.Size = UDim2.new(1, 0, 0, 72)
+GridContainer.Position = UDim2.new(0, 0, 0, 116)
+GridContainer.BackgroundTransparency = 1
+GridContainer.Parent = PageHop
 
-local function addStatRow(yOffset, label, value)
-    local l = Instance.new("TextLabel")
-    l.Size = UDim2.new(0.4, 0, 0, 20)
-    l.Position = UDim2.new(0, 12, 0, yOffset)
-    l.BackgroundTransparency = 1
-    l.Font = Enum.Font.Gotham
-    l.Text = label
-    l.TextColor3 = Colors.TextMuted
-    l.TextSize = 11
-    l.TextXAlignment = Enum.TextXAlignment.Left
-    l.Parent = InfoBlock
+-- Left Card: Current Population
+local PopCard = Instance.new("Frame")
+PopCard.Size = UDim2.new(0.5, -4, 1, 0)
+PopCard.Position = UDim2.new(0, 0, 0, 0)
+PopCard.BackgroundColor3 = Colors.Surface
+PopCard.BorderSizePixel = 0
+PopCard.Parent = GridContainer
 
-    local v = Instance.new("TextLabel")
-    v.Size = UDim2.new(0.6, -24, 0, 20)
-    v.Position = UDim2.new(0.4, 12, 0, yOffset)
-    v.BackgroundTransparency = 1
-    v.Font = Enum.Font.GothamMedium
-    v.Text = value
-    v.TextColor3 = Colors.TextPrimary
-    v.TextSize = 11
-    v.TextXAlignment = Enum.TextXAlignment.Right
-    v.TextTruncate = Enum.TextTruncate.AtEnd
-    v.Parent = InfoBlock
-    return v
+local PopCorner = Instance.new("UICorner")
+PopCorner.CornerRadius = UDim.new(0, 7)
+PopCorner.Parent = PopCard
+
+pcall(function()
+    local s = Instance.new("UIStroke")
+    s.Color = Colors.Border
+    s.Thickness = 1
+    s.Parent = PopCard
+end)
+
+local PopTitle = Instance.new("TextLabel")
+PopTitle.Size = UDim2.new(1, -16, 0, 14)
+PopTitle.Position = UDim2.new(0, 10, 0, 8)
+PopTitle.BackgroundTransparency = 1
+PopTitle.Font = Enum.Font.GothamBold
+PopTitle.Text = "CURRENT POPULATION"
+PopTitle.TextColor3 = Colors.TextMuted
+PopTitle.TextSize = 9
+PopTitle.TextXAlignment = Enum.TextXAlignment.Left
+PopTitle.Parent = PopCard
+
+local PlayerCountStat = Instance.new("TextLabel")
+PlayerCountStat.Size = UDim2.new(1, -16, 0, 20)
+PlayerCountStat.Position = UDim2.new(0, 10, 0, 24)
+PlayerCountStat.BackgroundTransparency = 1
+PlayerCountStat.Font = Enum.Font.GothamBold
+PlayerCountStat.Text = string.format("%d Players", #Players:GetPlayers())
+PlayerCountStat.TextColor3 = Colors.TextTitle
+PlayerCountStat.TextSize = 14
+PlayerCountStat.TextXAlignment = Enum.TextXAlignment.Left
+PlayerCountStat.Parent = PopCard
+
+local PopBarTrack = Instance.new("Frame")
+PopBarTrack.Size = UDim2.new(1, -20, 0, 4)
+PopBarTrack.Position = UDim2.new(0, 10, 0, 52)
+PopBarTrack.BackgroundColor3 = Colors.Void
+PopBarTrack.BorderSizePixel = 0
+PopBarTrack.Parent = PopCard
+
+local PopBarCorner = Instance.new("UICorner")
+PopBarCorner.CornerRadius = UDim.new(1, 0)
+PopBarCorner.Parent = PopBarTrack
+
+local PopBarFill = Instance.new("Frame")
+PopBarFill.Size = UDim2.new(math.clamp(#Players:GetPlayers() / 20, 0.05, 1), 0, 1, 0)
+PopBarFill.BackgroundColor3 = Colors.Success
+PopBarFill.BorderSizePixel = 0
+PopBarFill.Parent = PopBarTrack
+
+local PopFillCorner = Instance.new("UICorner")
+PopFillCorner.CornerRadius = UDim.new(1, 0)
+PopFillCorner.Parent = PopBarFill
+
+local function updatePlayerTelemetry()
+    local cnt = #Players:GetPlayers()
+    PlayerCountStat.Text = string.format("%d Players", cnt)
+    PopBarFill.Size = UDim2.new(math.clamp(cnt / 20, 0.05, 1), 0, 1, 0)
 end
 
-addStatRow(12, "Place ID", tostring(PlaceId))
-local PlayerCountStat = addStatRow(36, "Current Server", string.format("%d players", #Players:GetPlayers()))
-local JobIdStat = addStatRow(60, "Server Job ID", string.sub(tostring(CurrentJobId), 1, 18) .. "...")
-addStatRow(84, "Executor Context", (identifyexecutor and identifyexecutor() or "Standard"))
+Players.PlayerAdded:Connect(updatePlayerTelemetry)
+Players.PlayerRemoving:Connect(updatePlayerTelemetry)
 
-Players.PlayerAdded:Connect(function()
-    PlayerCountStat.Text = string.format("%d players", #Players:GetPlayers())
-end)
-Players.PlayerRemoving:Connect(function()
-    PlayerCountStat.Text = string.format("%d players", #Players:GetPlayers())
+-- Right Card: Server Job ID
+local JobCard = Instance.new("Frame")
+JobCard.Size = UDim2.new(0.5, -4, 1, 0)
+JobCard.Position = UDim2.new(0.5, 4, 0, 0)
+JobCard.BackgroundColor3 = Colors.Surface
+JobCard.BorderSizePixel = 0
+JobCard.Parent = GridContainer
+
+local JobCorner = Instance.new("UICorner")
+JobCorner.CornerRadius = UDim.new(0, 7)
+JobCorner.Parent = JobCard
+
+pcall(function()
+    local s = Instance.new("UIStroke")
+    s.Color = Colors.Border
+    s.Thickness = 1
+    s.Parent = JobCard
 end)
 
--- =================== TAB 2: SERVER LIST ===================
+local JobTitle = Instance.new("TextLabel")
+JobTitle.Size = UDim2.new(1, -16, 0, 14)
+JobTitle.Position = UDim2.new(0, 10, 0, 8)
+JobTitle.BackgroundTransparency = 1
+JobTitle.Font = Enum.Font.GothamBold
+JobTitle.Text = "SERVER JOB ID"
+JobTitle.TextColor3 = Colors.TextMuted
+JobTitle.TextSize = 9
+JobTitle.TextXAlignment = Enum.TextXAlignment.Left
+JobTitle.Parent = JobCard
+
+local JobIdStat = Instance.new("TextLabel")
+JobIdStat.Size = UDim2.new(1, -66, 0, 20)
+JobIdStat.Position = UDim2.new(0, 10, 0, 24)
+JobIdStat.BackgroundTransparency = 1
+JobIdStat.Font = Enum.Font.GothamMedium
+JobIdStat.Text = string.sub(tostring(CurrentJobId), 1, 14) .. "..."
+JobIdStat.TextColor3 = Colors.TextSecondary
+JobIdStat.TextSize = 11
+JobIdStat.TextXAlignment = Enum.TextXAlignment.Left
+JobIdStat.Parent = JobCard
+
+local QuickCopyBtn = Instance.new("TextButton")
+QuickCopyBtn.Size = UDim2.new(0, 48, 0, 22)
+QuickCopyBtn.Position = UDim2.new(1, -56, 0, 24)
+QuickCopyBtn.BackgroundColor3 = Colors.SurfaceRaised
+QuickCopyBtn.Font = Enum.Font.GothamMedium
+QuickCopyBtn.Text = "Copy"
+QuickCopyBtn.TextColor3 = Colors.AccentHover
+QuickCopyBtn.TextSize = 9
+QuickCopyBtn.BorderSizePixel = 0
+QuickCopyBtn.Parent = JobCard
+
+local QCCorner = Instance.new("UICorner")
+QCCorner.CornerRadius = UDim.new(0, 4)
+QCCorner.Parent = QuickCopyBtn
+
+QuickCopyBtn.MouseButton1Click:Connect(function()
+    local clipFn = setclipboard or toclipboard or (syn and syn.write_clipboard)
+    if typeof(clipFn) == "function" then
+        pcall(clipFn, tostring(CurrentJobId))
+        QuickCopyBtn.Text = "Copied!"
+        task.wait(1.5)
+        QuickCopyBtn.Text = "Copy"
+    end
+end)
+
+-- Feature Guarantee Banner
+local GuaranteeBanner = Instance.new("Frame")
+GuaranteeBanner.Size = UDim2.new(1, 0, 0, 22)
+GuaranteeBanner.Position = UDim2.new(0, 0, 0, 194)
+GuaranteeBanner.BackgroundTransparency = 1
+GuaranteeBanner.Parent = PageHop
+
+local GuaranteeLabel = Instance.new("TextLabel")
+GuaranteeLabel.Size = UDim2.new(1, 0, 1, 0)
+GuaranteeLabel.BackgroundTransparency = 1
+GuaranteeLabel.Font = Enum.Font.Gotham
+GuaranteeLabel.Text = "Adaptive Hopper Engine -- Always lands on lowest active population"
+GuaranteeLabel.TextColor3 = Colors.TextMuted
+GuaranteeLabel.TextSize = 9
+GuaranteeLabel.TextXAlignment = Enum.TextXAlignment.Center
+GuaranteeLabel.Parent = GuaranteeBanner
+
+-- ==================== TAB 2: SERVER LIST ====================
 local SearchBar = Instance.new("Frame")
-SearchBar.Size = UDim2.new(1, 0, 0, 36)
-SearchBar.Position = UDim2.new(0, 0, 0, 4)
+SearchBar.Size = UDim2.new(1, 0, 0, 32)
+SearchBar.Position = UDim2.new(0, 0, 0, 2)
 SearchBar.BackgroundColor3 = Colors.Surface
 SearchBar.BorderSizePixel = 0
 SearchBar.Parent = PageServers
@@ -579,14 +786,21 @@ local SearchBarCorner = Instance.new("UICorner")
 SearchBarCorner.CornerRadius = UDim.new(0, 6)
 SearchBarCorner.Parent = SearchBar
 
+pcall(function()
+    local s = Instance.new("UIStroke")
+    s.Color = Colors.Border
+    s.Thickness = 1
+    s.Parent = SearchBar
+end)
+
 local RefreshBtn = Instance.new("TextButton")
-RefreshBtn.Size = UDim2.new(0, 90, 0, 26)
-RefreshBtn.Position = UDim2.new(1, -95, 0.5, -13)
+RefreshBtn.Size = UDim2.new(0, 84, 0, 22)
+RefreshBtn.Position = UDim2.new(1, -90, 0.5, -11)
 RefreshBtn.BackgroundColor3 = Colors.Accent
 RefreshBtn.Font = Enum.Font.GothamMedium
 RefreshBtn.Text = "Refresh"
 RefreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-RefreshBtn.TextSize = 11
+RefreshBtn.TextSize = 10
 RefreshBtn.BorderSizePixel = 0
 RefreshBtn.Parent = SearchBar
 
@@ -595,20 +809,20 @@ RefreshCorner.CornerRadius = UDim.new(0, 5)
 RefreshCorner.Parent = RefreshBtn
 
 local FoundLabel = Instance.new("TextLabel")
-FoundLabel.Size = UDim2.new(1, -110, 1, 0)
+FoundLabel.Size = UDim2.new(1, -105, 1, 0)
 FoundLabel.Position = UDim2.new(0, 12, 0, 0)
 FoundLabel.BackgroundTransparency = 1
-FoundLabel.Font = Enum.Font.Gotham
+FoundLabel.Font = Enum.Font.GothamMedium
 FoundLabel.Text = "Ready to scan"
-FoundLabel.TextColor3 = Colors.TextSecondary
+FoundLabel.TextColor3 = Colors.TextPrimary
 FoundLabel.TextSize = 11
 FoundLabel.TextXAlignment = Enum.TextXAlignment.Left
 FoundLabel.Parent = SearchBar
 
 local ServerScroll = Instance.new("ScrollingFrame")
 ServerScroll.Name = "ServerScroll"
-ServerScroll.Size = UDim2.new(1, 0, 1, -48)
-ServerScroll.Position = UDim2.new(0, 0, 0, 46)
+ServerScroll.Size = UDim2.new(1, 0, 1, -40)
+ServerScroll.Position = UDim2.new(0, 0, 0, 38)
 ServerScroll.BackgroundColor3 = Colors.Surface
 ServerScroll.BorderSizePixel = 0
 ServerScroll.ScrollBarThickness = 3
@@ -621,27 +835,34 @@ local ScrollCorner = Instance.new("UICorner")
 ScrollCorner.CornerRadius = UDim.new(0, 6)
 ScrollCorner.Parent = ServerScroll
 
+pcall(function()
+    local s = Instance.new("UIStroke")
+    s.Color = Colors.Border
+    s.Thickness = 1
+    s.Parent = ServerScroll
+end)
+
 local ScrollLayout = Instance.new("UIListLayout")
 ScrollLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ScrollLayout.Padding = UDim.new(0, 6)
+ScrollLayout.Padding = UDim.new(0, 5)
 ScrollLayout.Parent = ServerScroll
 
 local ScrollPadding = Instance.new("UIPadding")
-ScrollPadding.PaddingTop = UDim.new(0, 8)
-ScrollPadding.PaddingBottom = UDim.new(0, 8)
-ScrollPadding.PaddingLeft = UDim.new(0, 8)
-ScrollPadding.PaddingRight = UDim.new(0, 8)
+ScrollPadding.PaddingTop = UDim.new(0, 6)
+ScrollPadding.PaddingBottom = UDim.new(0, 6)
+ScrollPadding.PaddingLeft = UDim.new(0, 6)
+ScrollPadding.PaddingRight = UDim.new(0, 6)
 ScrollPadding.Parent = ServerScroll
 
--- =================== TAB 3: SETTINGS & TOOLS ===================
+-- ==================== TAB 3: SETTINGS & TOOLS ====================
 local ToolsLayout = Instance.new("UIListLayout")
 ToolsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ToolsLayout.Padding = UDim.new(0, 8)
+ToolsLayout.Padding = UDim.new(0, 6)
 ToolsLayout.Parent = PageTools
 
 local function createToolButton(title, desc, callback)
     local card = Instance.new("TextButton")
-    card.Size = UDim2.new(1, 0, 0, 46)
+    card.Size = UDim2.new(1, 0, 0, 44)
     card.BackgroundColor3 = Colors.Surface
     card.BorderSizePixel = 0
     card.Text = ""
@@ -652,25 +873,32 @@ local function createToolButton(title, desc, callback)
     corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = card
 
+    pcall(function()
+        local s = Instance.new("UIStroke")
+        s.Color = Colors.Border
+        s.Thickness = 1
+        s.Parent = card
+    end)
+
     local t = Instance.new("TextLabel")
-    t.Size = UDim2.new(1, -24, 0, 18)
+    t.Size = UDim2.new(1, -20, 0, 16)
     t.Position = UDim2.new(0, 12, 0, 6)
     t.BackgroundTransparency = 1
     t.Font = Enum.Font.GothamMedium
     t.Text = title
-    t.TextColor3 = Colors.TextPrimary
+    t.TextColor3 = Colors.TextTitle
     t.TextSize = 11
     t.TextXAlignment = Enum.TextXAlignment.Left
     t.Parent = card
 
     local d = Instance.new("TextLabel")
-    d.Size = UDim2.new(1, -24, 0, 14)
-    d.Position = UDim2.new(0, 12, 0, 24)
+    d.Size = UDim2.new(1, -20, 0, 14)
+    d.Position = UDim2.new(0, 12, 0, 23)
     d.BackgroundTransparency = 1
     d.Font = Enum.Font.Gotham
     d.Text = desc
     d.TextColor3 = Colors.TextMuted
-    d.TextSize = 10
+    d.TextSize = 9
     d.TextXAlignment = Enum.TextXAlignment.Left
     d.Parent = card
 
@@ -684,90 +912,116 @@ local function createToolButton(title, desc, callback)
     return card
 end
 
-createToolButton("Rejoin Current Server", "Reconnect to this exact JobId", function()
+createToolButton("Rejoin Current Server", "Reconnect to this exact server instance", function()
     TeleportService:TeleportToPlaceInstance(PlaceId, CurrentJobId, LocalPlayer)
 end)
 
-createToolButton("Copy Server Job ID", "Copies instance GUID to clipboard", function()
-    if typeof(setclipboard) == "function" then
-        setclipboard(tostring(CurrentJobId))
+createToolButton("Copy Server Job ID", "Save active instance GUID to clipboard", function()
+    local clipFn = setclipboard or toclipboard or (syn and syn.write_clipboard)
+    if typeof(clipFn) == "function" then
+        pcall(clipFn, tostring(CurrentJobId))
         setStatus("Job ID copied to clipboard", Colors.Success)
     end
 end)
 
-createToolButton("Anti-AFK Protection (Signal Bypass)", "Active -- Disconnect kicks prevented", function()
+createToolButton("Anti-AFK Protection (Signal Bypass)", "Active -- 20-minute client idle disconnect timer bypassed", function()
     setStatus("Anti-AFK is active via connection hook", Colors.Success)
 end)
 
 local KeybindNote = Instance.new("TextLabel")
-KeybindNote.Size = UDim2.new(1, 0, 0, 24)
+KeybindNote.Size = UDim2.new(1, 0, 0, 20)
 KeybindNote.BackgroundTransparency = 1
 KeybindNote.Font = Enum.Font.Gotham
-KeybindNote.Text = "Toggle Interface: RightShift / RightControl"
+KeybindNote.Text = "Hotkey: Press RightShift or RightControl to toggle window"
 KeybindNote.TextColor3 = Colors.TextMuted
-KeybindNote.TextSize = 10
+KeybindNote.TextSize = 9
 KeybindNote.Parent = PageTools
 
 -- ==================== CORE API & TELEPORT LOGIC ====================
 local isQuerying = false
 
+-- Resilient HTTP Request Engine (Prioritizes native game:HttpGet session, then requestMethod, with retry)
 local function performRequest(url)
+    -- 1. Try game:HttpGet first (Roblox internal client stack carries authentication & avoids 429)
+    if typeof(game.HttpGet) == "function" then
+        local ok, body = pcall(function()
+            return game:HttpGet(url)
+        end)
+        if ok and body and string.find(body, "\"data\"") then
+            return body, 200
+        end
+    end
+
+    -- 2. Fallback to custom executor request functions
     local requestMethod = (syn and syn.request) or (http and http.request) or request or http_request
     if typeof(requestMethod) == "function" then
         local ok, res = pcall(requestMethod, {
             Url = url,
             Method = "GET",
             Headers = {
-                ["User-Agent"] = "Roblox/WinInet",
+                ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 ["Accept"] = "application/json"
             }
         })
-        if ok and res and res.Body then
-            return res.Body, res.StatusCode
-        end
-    end
-
-    if typeof(game.HttpGet) == "function" then
-        local ok, body = pcall(function()
-            return game:HttpGet(url)
-        end)
-        if ok and body then
-            return body, 200
+        if ok and res then
+            local statusCode = tonumber(res.StatusCode) or 200
+            local body = res.Body or ""
+            if statusCode == 200 and string.find(body, "\"data\"") then
+                return body, 200
+            end
+            return body, statusCode
         end
     end
 
     return nil, 0
 end
 
-local function fetchServerPage(cursor)
+-- Robust Server Page Fetcher with Auto-Retry & Rate-Limit Backoff
+local function fetchServerPage(cursor, retryCount)
+    retryCount = retryCount or 3
     local query = (cursor and cursor ~= "") and ("&cursor=" .. cursor) or ""
-    local url = "https://games.roblox.com/v1/games/" .. tostring(PlaceId) .. "/servers/Public?sortOrder=Asc&limit=" .. tostring(Config.SearchLimit) .. query
+    local baseUrl = "https://games.roblox.com/v1/games/" .. tostring(PlaceId) .. "/servers/Public?sortOrder=Asc&limit=" .. tostring(Config.SearchLimit) .. query
 
-    local raw, status = performRequest(url)
-    if not raw then
-        return nil, "HTTP Transport Failed"
+    for attempt = 1, retryCount do
+        local raw, status = performRequest(baseUrl)
+        if raw and status == 200 then
+            local ok, decoded = pcall(function()
+                return HttpService:JSONDecode(raw)
+            end)
+            if ok and decoded and decoded.data then
+                return decoded, nil
+            end
+        end
+
+        if status == 429 then
+            setStatus(string.format("Menunggu antrian Roblox API (percobaan %d/%d)...", attempt, retryCount), Colors.Warning)
+            task.wait(1.0 * attempt)
+        else
+            task.wait(0.4)
+        end
     end
 
-    if status == 429 then
-        return nil, "Rate limit reached (429)"
+    -- Secondary fallback: Try without sortOrder=Asc if sortOrder query failed on this game
+    local altUrl = "https://games.roblox.com/v1/games/" .. tostring(PlaceId) .. "/servers/Public?limit=" .. tostring(Config.SearchLimit) .. query
+    local rawAlt, statusAlt = performRequest(altUrl)
+    if rawAlt and statusAlt == 200 then
+        local ok, decoded = pcall(function()
+            return HttpService:JSONDecode(rawAlt)
+        end)
+        if ok and decoded and decoded.data then
+            return decoded, nil
+        end
     end
 
-    local success, decoded = pcall(function()
-        return HttpService:JSONDecode(raw)
-    end)
-
-    if not success or not decoded or not decoded.data then
-        return nil, "JSON Parsing Exception"
-    end
-
-    return decoded, nil
+    return nil, "Gagal mengambil data dari Roblox API"
 end
+
 
 local function renderServerEntry(server, idx)
     local row = Instance.new("Frame")
     row.Name = "Entry_" .. tostring(idx)
     row.Size = UDim2.new(1, 0, 0, 38)
-    row.BackgroundColor3 = Colors.Background
+    row.BackgroundColor3 = Colors.Void
     row.BorderSizePixel = 0
     row.Parent = ServerScroll
 
@@ -775,40 +1029,67 @@ local function renderServerEntry(server, idx)
     rCorner.CornerRadius = UDim.new(0, 5)
     rCorner.Parent = row
 
+    pcall(function()
+        local s = Instance.new("UIStroke")
+        s.Color = Colors.Border
+        s.Thickness = 1
+        s.Parent = row
+    end)
+
     local count = tonumber(server.playing) or 0
-    local maxP = tonumber(server.maxPlayers) or 0
+    local maxP = tonumber(server.maxPlayers) or 999
+    if maxP <= 0 then maxP = 999 end
     local ping = server.ping and tostring(server.ping) .. "ms" or "--"
 
-    local info = Instance.new("TextLabel")
-    info.Size = UDim2.new(1, -90, 0, 18)
-    info.Position = UDim2.new(0, 10, 0, 3)
-    info.BackgroundTransparency = 1
-    info.Font = Enum.Font.GothamMedium
-    info.Text = string.format("%d / %d Players", count, maxP)
-    info.TextColor3 = Colors.TextPrimary
-    info.TextSize = 11
-    info.TextXAlignment = Enum.TextXAlignment.Left
-    info.Parent = row
+    local badgeBg = Colors.SuccessMuted
+    local badgeFg = Colors.SuccessText
+    if count >= 6 then
+        badgeBg = Color3.fromRGB(30, 41, 59)
+        badgeFg = Color3.fromRGB(148, 163, 184)
+    elseif count >= 3 then
+        badgeBg = Colors.CyanMuted
+        badgeFg = Colors.CyanText
+    end
+
+    local badge = Instance.new("Frame")
+    badge.Size = UDim2.new(0, 54, 0, 22)
+    badge.Position = UDim2.new(0, 8, 0.5, -11)
+    badge.BackgroundColor3 = badgeBg
+    badge.BorderSizePixel = 0
+    badge.Parent = row
+
+    local bCorner = Instance.new("UICorner")
+    bCorner.CornerRadius = UDim.new(0, 4)
+    bCorner.Parent = badge
+
+    local bText = Instance.new("TextLabel")
+    bText.Size = UDim2.new(1, 0, 1, 0)
+    bText.BackgroundTransparency = 1
+    bText.Font = Enum.Font.GothamBold
+    bText.Text = string.format("%d / %d", count, maxP)
+    bText.TextColor3 = badgeFg
+    bText.TextSize = 9
+    bText.Parent = badge
 
     local sub = Instance.new("TextLabel")
-    sub.Size = UDim2.new(1, -90, 0, 14)
-    sub.Position = UDim2.new(0, 10, 0, 20)
+    sub.Size = UDim2.new(1, -140, 1, 0)
+    sub.Position = UDim2.new(0, 70, 0, 0)
     sub.BackgroundTransparency = 1
     sub.Font = Enum.Font.Gotham
-    sub.Text = string.format("Latency: %s  ID: %s...", ping, string.sub(tostring(server.id), 1, 8))
-    sub.TextColor3 = Colors.TextMuted
+    sub.Text = string.format("Latency: %s  --  ID: %s...", ping, string.sub(tostring(server.id), 1, 8))
+    sub.TextColor3 = Colors.TextSecondary
     sub.TextSize = 9
     sub.TextXAlignment = Enum.TextXAlignment.Left
     sub.Parent = row
 
     local join = Instance.new("TextButton")
-    join.Size = UDim2.new(0, 60, 0, 24)
-    join.Position = UDim2.new(1, -68, 0.5, -12)
+    join.Size = UDim2.new(0, 58, 0, 22)
+    join.Position = UDim2.new(1, -66, 0.5, -11)
     join.BackgroundColor3 = Colors.SurfaceRaised
     join.Font = Enum.Font.GothamMedium
     join.Text = "Connect"
-    join.TextColor3 = Colors.TextPrimary
-    join.TextSize = 10
+    join.TextColor3 = Colors.TextTitle
+    join.TextSize = 9
     join.BorderSizePixel = 0
     join.Parent = row
 
@@ -822,7 +1103,7 @@ local function renderServerEntry(server, idx)
     end)
     join.MouseLeave:Connect(function()
         join.BackgroundColor3 = Colors.SurfaceRaised
-        join.TextColor3 = Colors.TextPrimary
+        join.TextColor3 = Colors.TextTitle
     end)
     join.MouseButton1Click:Connect(function()
         setStatus(string.format("Connecting to server (%d players)...", count), Colors.Accent)
@@ -832,12 +1113,12 @@ local function renderServerEntry(server, idx)
     end)
 end
 
--- Server Query Action
+-- Server Query Action (Server Browser)
 local function queryServerList()
     if isQuerying then return end
     isQuerying = true
     RefreshBtn.Text = "Scanning..."
-    setStatus("Querying public instances...", Colors.Warning)
+    setStatus("Memindai server publik...", Colors.Warning)
 
     for _, child in ipairs(ServerScroll:GetChildren()) do
         if child:IsA("Frame") then child:Destroy() end
@@ -846,60 +1127,80 @@ local function queryServerList()
     task.spawn(function()
         local cursor = nil
         local matches = {}
-        local smallestFound = nil
+        local allEligible = {}
+        local onlyCurrentServer = true
+        local scannedCount = 0
 
         for page = 1, Config.MaxPages do
-            setStatus(string.format("Scanning page %d...", page), Colors.Warning)
-            local result, err = fetchServerPage(cursor)
+            setStatus(string.format("Memindai halaman %d...", page), Colors.Warning)
+            local result, err = fetchServerPage(cursor, 3)
 
-            if not result then
-                setStatus("Network query interrupted: " .. (err or "timeout"), Colors.Danger)
-                break
+            if not result or not result.data then
+                if #allEligible > 0 then break end
+                task.wait(1)
+                result, err = fetchServerPage(cursor, 2)
+                if not result or not result.data then break end
             end
 
             for _, s in ipairs(result.data) do
+                scannedCount = scannedCount + 1
                 local p = tonumber(s.playing) or 0
-                local maxP = tonumber(s.maxPlayers) or 0
+                local maxP = tonumber(s.maxPlayers) or 999
+                if maxP <= 0 then maxP = 999 end
                 local sId = tostring(s.id)
 
-                if sId ~= CurrentJobId and p > 0 and p < maxP then
-                    if not smallestFound or p < (smallestFound.playing or 999) then
-                        smallestFound = s
-                    end
-
-                    if p >= Config.MinPlayers and p <= Config.MaxPlayers then
-                        table.insert(matches, s)
+                if sId ~= CurrentJobId then
+                    onlyCurrentServer = false
+                    if p < maxP then
+                        table.insert(allEligible, s)
+                        if p >= Config.MinPlayers and p <= Config.MaxPlayers then
+                            table.insert(matches, s)
+                        end
                     end
                 end
             end
 
-            cursor = result.nextPageCursor
-            if not cursor or #matches >= 25 then
+            if #matches >= 25 then
                 break
             end
 
-            task.wait(0.2 + math.random() * 0.1)
+            cursor = result.nextPageCursor
+            if not cursor or cursor == "" then
+                break
+            end
+
+            task.wait(0.35 + math.random() * 0.15)
         end
 
         table.sort(matches, function(a, b)
             return (a.playing or 0) < (b.playing or 0)
         end)
+        table.sort(allEligible, function(a, b)
+            return (a.playing or 0) < (b.playing or 0)
+        end)
 
-        FoundLabel.Text = string.format("%d servers available", #matches)
-
-        if #matches == 0 then
-            if smallestFound then
-                table.insert(matches, smallestFound)
-                renderServerEntry(smallestFound, 1)
-                setStatus(string.format("Strict threshold empty. Smallest found: %d players", smallestFound.playing), Colors.Warning)
-            else
-                setStatus("No active low-population instances found", Colors.Danger)
-            end
-        else
+        if #matches > 0 then
             for i, s in ipairs(matches) do
                 renderServerEntry(s, i)
+                if i >= 30 then break end
             end
-            setStatus(string.format("Found %d servers matching filter", #matches), Colors.Success)
+            FoundLabel.Text = string.format("%d servers available", #matches)
+            setStatus(string.format("Ditemukan %d server sesuai filter (%d-%d pemain).", #matches, Config.MinPlayers, Config.MaxPlayers), Colors.Success)
+        elseif #allEligible > 0 then
+            -- Fallback: show the least populated servers found in the entire game
+            for i, s in ipairs(allEligible) do
+                renderServerEntry(s, i)
+                if i >= 30 then break end
+            end
+            local bestCount = allEligible[1].playing or 0
+            FoundLabel.Text = string.format("%d server (tersepi)", math.min(#allEligible, 30))
+            setStatus(string.format("Server %d-%d pemain kosong. Menampilkan server paling sepi yang ada (mulai %d pemain).", Config.MinPlayers, Config.MaxPlayers, bestCount), Colors.Warning)
+        else
+            if onlyCurrentServer and scannedCount > 0 then
+                setStatus("Hanya ada 1 server aktif di game ini (server kamu saat ini).", Colors.Warning)
+            else
+                setStatus("Tidak dapat mengambil server. Silakan coba klik Refresh lagi.", Colors.Danger)
+            end
         end
 
         isQuerying = false
@@ -907,68 +1208,105 @@ local function queryServerList()
     end)
 end
 
--- Auto-Hop Action (Lowest population join)
+-- Auto-Hop Action (ALWAYS FINDS A SMALL SERVER NO MATTER WHAT)
 local function executeQuickHop()
     if isQuerying then return end
     isQuerying = true
-    AutoHopBtn.Text = "Scanning Cluster..."
-    setStatus("Locating optimal low-pop instance...", Colors.Warning)
+    AutoHopBtn.Text = "Mencari Server Sepi..."
+    setStatus("Memindai cluster server...", Colors.Warning)
 
     task.spawn(function()
         local cursor = nil
-        local candidates = {}
-        local fallbackServer = nil
+        local matchingServers = {}
+        local allEligibleServers = {}
+        local onlyCurrentServer = true
+        local scannedCount = 0
 
         for page = 1, Config.MaxPages do
-            setStatus(string.format("Scanning cluster page %d...", page), Colors.Warning)
-            local result, err = fetchServerPage(cursor)
+            setStatus(string.format("Memindai halaman cluster %d...", page), Colors.Warning)
+            local result, err = fetchServerPage(cursor, 3)
 
-            if not result then
-                setStatus("Search error: " .. (err or "retry"), Colors.Danger)
-                break
+            if not result or not result.data then
+                if #allEligibleServers > 0 then break end
+                task.wait(1)
+                result, err = fetchServerPage(cursor, 2)
+                if not result or not result.data then break end
             end
 
             for _, s in ipairs(result.data) do
+                scannedCount = scannedCount + 1
                 local p = tonumber(s.playing) or 0
-                local maxP = tonumber(s.maxPlayers) or 0
+                local maxP = tonumber(s.maxPlayers) or 999
+                if maxP <= 0 then maxP = 999 end
                 local sId = tostring(s.id)
 
-                if sId ~= CurrentJobId and p > 0 and p < maxP then
-                    if not fallbackServer or p < (fallbackServer.playing or 999) then
-                        fallbackServer = s
-                    end
-
-                    if p >= Config.MinPlayers and p <= Config.MaxPlayers then
-                        table.insert(candidates, s)
+                if sId ~= CurrentJobId then
+                    onlyCurrentServer = false
+                    if p < maxP then
+                        table.insert(allEligibleServers, s)
+                        if p >= Config.MinPlayers and p <= Config.MaxPlayers then
+                            table.insert(matchingServers, s)
+                        end
                     end
                 end
             end
 
-            if #candidates > 0 then break end
+            -- If we found at least 1 server strictly matching threshold, we can hop immediately!
+            if #matchingServers > 0 then
+                break
+            end
 
             cursor = result.nextPageCursor
-            if not cursor then break end
+            if not cursor or cursor == "" then
+                break
+            end
 
-            task.wait(0.18 + math.random() * 0.1)
+            task.wait(0.35 + math.random() * 0.15)
         end
 
-        if #candidates == 0 and fallbackServer then
-            table.insert(candidates, fallbackServer)
+        table.sort(matchingServers, function(a, b)
+            return (a.playing or 0) < (b.playing or 0)
+        end)
+        table.sort(allEligibleServers, function(a, b)
+            return (a.playing or 0) < (b.playing or 0)
+        end)
+
+        local targetList = {}
+        local isFallback = false
+
+        if #matchingServers > 0 then
+            targetList = matchingServers
+        elseif #allEligibleServers > 0 then
+            -- "BAGIANMANAPUN JUGA SC HARUS CARI SERVER SEPI"
+            -- Strict threshold had no servers, but we join the emptiest server available in the whole game!
+            targetList = allEligibleServers
+            isFallback = true
         end
 
-        if #candidates == 0 then
-            setStatus("No alternative servers located. Try raising filter.", Colors.Danger)
+        if #targetList == 0 then
+            if onlyCurrentServer and scannedCount > 0 then
+                setStatus("Hanya ada 1 server di game ini (server yang sedang kamu mainkan).", Colors.Warning)
+            else
+                setStatus("Gagal memindai server. Coba klik Hop sekali lagi.", Colors.Danger)
+            end
             isQuerying = false
             AutoHopBtn.Text = "Hop to Smallest Server"
             return
         end
 
-        table.sort(candidates, function(a, b)
-            return (a.playing or 0) < (b.playing or 0)
-        end)
+        local smallestPlayerCount = targetList[1].playing or 0
+        if isFallback then
+            setStatus(string.format("Server %d-%d tidak ada. Menghubungkan ke server paling sepi yang ada (%d pemain)...", Config.MinPlayers, Config.MaxPlayers, smallestPlayerCount), Colors.Accent)
+        else
+            setStatus(string.format("Ditemukan server sepi (%d pemain)! Menghubungkan...", smallestPlayerCount), Colors.Success)
+        end
 
-        for _, target in ipairs(candidates) do
-            setStatus(string.format("Connecting to target instance (%d players)...", target.playing), Colors.Success)
+        -- Teleport with failover through targetList
+        for idx, target in ipairs(targetList) do
+            if idx > 1 then
+                setStatus(string.format("Mencoba server cadangan (%d pemain)...", target.playing or 0), Colors.Warning)
+            end
+
             local ok = pcall(function()
                 TeleportService:TeleportToPlaceInstance(PlaceId, target.id, LocalPlayer)
             end)
@@ -976,7 +1314,6 @@ local function executeQuickHop()
             if ok then
                 task.wait(Config.RetryDelay + 1)
             else
-                setStatus("Connection timed out, cycling candidate...", Colors.Warning)
                 task.wait(Config.RetryDelay)
             end
         end
