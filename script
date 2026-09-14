@@ -442,6 +442,9 @@ end
 for name, btn in pairs(TabButtons) do
     btn.MouseButton1Click:Connect(function()
         switchTab(name)
+        if name == "servers" and #ServerScroll:GetChildren() <= 1 and not isQuerying and queryServerList then
+            task.spawn(queryServerList)
+        end
     end)
 end
 
@@ -939,6 +942,7 @@ KeybindNote.Parent = PageTools
 
 -- ==================== CORE API & TELEPORT LOGIC ====================
 local isQuerying = false
+local queryServerList = nil
 
 -- Resilient HTTP Request Engine (Prioritizes native game:HttpGet session, then requestMethod, with retry)
 local function performRequest(url)
@@ -1020,13 +1024,13 @@ end
 local function renderServerEntry(server, idx)
     local row = Instance.new("Frame")
     row.Name = "Entry_" .. tostring(idx)
-    row.Size = UDim2.new(1, 0, 0, 38)
-    row.BackgroundColor3 = Colors.Void
+    row.Size = UDim2.new(1, 0, 0, 40)
+    row.BackgroundColor3 = Colors.Surface
     row.BorderSizePixel = 0
     row.Parent = ServerScroll
 
     local rCorner = Instance.new("UICorner")
-    rCorner.CornerRadius = UDim.new(0, 5)
+    rCorner.CornerRadius = UDim.new(0, 6)
     rCorner.Parent = row
 
     pcall(function()
@@ -1039,20 +1043,21 @@ local function renderServerEntry(server, idx)
     local count = tonumber(server.playing) or 0
     local maxP = tonumber(server.maxPlayers) or 999
     if maxP <= 0 then maxP = 999 end
-    local ping = server.ping and tostring(server.ping) .. "ms" or "--"
+    local ping = (server.ping and tostring(server.ping) ~= "") and (tostring(server.ping) .. "ms") or "--"
+    local fps = (server.fps and tostring(server.fps) ~= "") and (string.format("%.0f FPS", server.fps)) or ""
 
     local badgeBg = Colors.SuccessMuted
     local badgeFg = Colors.SuccessText
-    if count >= 6 then
+    if count >= 8 then
         badgeBg = Color3.fromRGB(30, 41, 59)
         badgeFg = Color3.fromRGB(148, 163, 184)
-    elseif count >= 3 then
+    elseif count >= 4 then
         badgeBg = Colors.CyanMuted
         badgeFg = Colors.CyanText
     end
 
     local badge = Instance.new("Frame")
-    badge.Size = UDim2.new(0, 54, 0, 22)
+    badge.Size = UDim2.new(0, 56, 0, 22)
     badge.Position = UDim2.new(0, 8, 0.5, -11)
     badge.BackgroundColor3 = badgeBg
     badge.BorderSizePixel = 0
@@ -1071,25 +1076,39 @@ local function renderServerEntry(server, idx)
     bText.TextSize = 9
     bText.Parent = badge
 
+    local info = Instance.new("TextLabel")
+    info.Size = UDim2.new(1, -150, 0, 16)
+    info.Position = UDim2.new(0, 72, 0, 4)
+    info.BackgroundTransparency = 1
+    info.Font = Enum.Font.GothamMedium
+    info.Text = string.format("Server #%d  --  %d of %d Players", idx, count, maxP)
+    info.TextColor3 = Colors.TextPrimary
+    info.TextSize = 10
+    info.TextXAlignment = Enum.TextXAlignment.Left
+    info.Parent = row
+
     local sub = Instance.new("TextLabel")
-    sub.Size = UDim2.new(1, -140, 1, 0)
-    sub.Position = UDim2.new(0, 70, 0, 0)
+    sub.Size = UDim2.new(1, -150, 0, 14)
+    sub.Position = UDim2.new(0, 72, 0, 20)
     sub.BackgroundTransparency = 1
     sub.Font = Enum.Font.Gotham
-    sub.Text = string.format("Latency: %s  --  ID: %s...", ping, string.sub(tostring(server.id), 1, 8))
-    sub.TextColor3 = Colors.TextSecondary
+    local metaText = string.format("Ping: %s", ping)
+    if fps ~= "" then metaText = metaText .. "  •  " .. fps end
+    metaText = metaText .. "  •  ID: " .. string.sub(tostring(server.id), 1, 8) .. "..."
+    sub.Text = metaText
+    sub.TextColor3 = Colors.TextMuted
     sub.TextSize = 9
     sub.TextXAlignment = Enum.TextXAlignment.Left
     sub.Parent = row
 
     local join = Instance.new("TextButton")
-    join.Size = UDim2.new(0, 58, 0, 22)
-    join.Position = UDim2.new(1, -66, 0.5, -11)
+    join.Size = UDim2.new(0, 64, 0, 24)
+    join.Position = UDim2.new(1, -72, 0.5, -12)
     join.BackgroundColor3 = Colors.SurfaceRaised
     join.Font = Enum.Font.GothamMedium
     join.Text = "Connect"
     join.TextColor3 = Colors.TextTitle
-    join.TextSize = 9
+    join.TextSize = 10
     join.BorderSizePixel = 0
     join.Parent = row
 
@@ -1105,20 +1124,46 @@ local function renderServerEntry(server, idx)
         join.BackgroundColor3 = Colors.SurfaceRaised
         join.TextColor3 = Colors.TextTitle
     end)
+
     join.MouseButton1Click:Connect(function()
-        setStatus(string.format("Connecting to server (%d players)...", count), Colors.Accent)
+        join.Text = "Joining..."
+        join.AutoButtonColor = false
+        setStatus(string.format("Teleporting ke server #%d (%d/%d pemain)...", idx, count, maxP), Colors.Accent)
+
         pcall(function()
-            TeleportService:TeleportToPlaceInstance(PlaceId, server.id, LocalPlayer)
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Server Hopper",
+                Text = string.format("Joining server with %d players...", count),
+                Duration = 3
+            })
+        end)
+
+        task.spawn(function()
+            local ok, err = pcall(function()
+                TeleportService:TeleportToPlaceInstance(tonumber(PlaceId), tostring(server.id), LocalPlayer)
+            end)
+
+            if not ok then
+                join.Text = "Failed"
+                setStatus("Gagal teleport: " .. tostring(err), Colors.Danger)
+                task.wait(2.5)
+                join.Text = "Connect"
+                join.AutoButtonColor = true
+            else
+                task.wait(Config.RetryDelay + 2)
+                join.Text = "Connect"
+                join.AutoButtonColor = true
+            end
         end)
     end)
 end
 
--- Server Query Action (Server Browser)
+-- Server Query Action (REAL LIVE SERVER LIST BROWSER)
 local function queryServerList()
     if isQuerying then return end
     isQuerying = true
     RefreshBtn.Text = "Scanning..."
-    setStatus("Memindai server publik...", Colors.Warning)
+    setStatus("Mengambil daftar server asli dari Roblox API...", Colors.Warning)
 
     for _, child in ipairs(ServerScroll:GetChildren()) do
         if child:IsA("Frame") then child:Destroy() end
@@ -1126,17 +1171,16 @@ local function queryServerList()
 
     task.spawn(function()
         local cursor = nil
-        local matches = {}
-        local allEligible = {}
+        local realServers = {}
         local onlyCurrentServer = true
         local scannedCount = 0
 
         for page = 1, Config.MaxPages do
-            setStatus(string.format("Memindai halaman %d...", page), Colors.Warning)
+            setStatus(string.format("Mengambil data server asli (Halaman %d)...", page), Colors.Warning)
             local result, err = fetchServerPage(cursor, 3)
 
             if not result or not result.data then
-                if #allEligible > 0 then break end
+                if #realServers > 0 then break end
                 task.wait(1)
                 result, err = fetchServerPage(cursor, 2)
                 if not result or not result.data then break end
@@ -1152,15 +1196,12 @@ local function queryServerList()
                 if sId ~= CurrentJobId then
                     onlyCurrentServer = false
                     if p < maxP then
-                        table.insert(allEligible, s)
-                        if p >= Config.MinPlayers and p <= Config.MaxPlayers then
-                            table.insert(matches, s)
-                        end
+                        table.insert(realServers, s)
                     end
                 end
             end
 
-            if #matches >= 25 then
+            if #realServers >= 40 then
                 break
             end
 
@@ -1169,37 +1210,25 @@ local function queryServerList()
                 break
             end
 
-            task.wait(0.35 + math.random() * 0.15)
+            task.wait(0.3 + math.random() * 0.15)
         end
 
-        table.sort(matches, function(a, b)
-            return (a.playing or 0) < (b.playing or 0)
-        end)
-        table.sort(allEligible, function(a, b)
+        table.sort(realServers, function(a, b)
             return (a.playing or 0) < (b.playing or 0)
         end)
 
-        if #matches > 0 then
-            for i, s in ipairs(matches) do
+        if #realServers > 0 then
+            for i, s in ipairs(realServers) do
                 renderServerEntry(s, i)
-                if i >= 30 then break end
+                if i >= 40 then break end
             end
-            FoundLabel.Text = string.format("%d servers available", #matches)
-            setStatus(string.format("Ditemukan %d server sesuai filter (%d-%d pemain).", #matches, Config.MinPlayers, Config.MaxPlayers), Colors.Success)
-        elseif #allEligible > 0 then
-            -- Fallback: show the least populated servers found in the entire game
-            for i, s in ipairs(allEligible) do
-                renderServerEntry(s, i)
-                if i >= 30 then break end
-            end
-            local bestCount = allEligible[1].playing or 0
-            FoundLabel.Text = string.format("%d server (tersepi)", math.min(#allEligible, 30))
-            setStatus(string.format("Server %d-%d pemain kosong. Menampilkan server paling sepi yang ada (mulai %d pemain).", Config.MinPlayers, Config.MaxPlayers, bestCount), Colors.Warning)
+            FoundLabel.Text = string.format("%d server aktif (Data Asli)", math.min(#realServers, 40))
+            setStatus(string.format("Ditemukan %d server aktif asli. Klik Connect untuk bergabung.", #realServers), Colors.Success)
         else
             if onlyCurrentServer and scannedCount > 0 then
                 setStatus("Hanya ada 1 server aktif di game ini (server kamu saat ini).", Colors.Warning)
             else
-                setStatus("Tidak dapat mengambil server. Silakan coba klik Refresh lagi.", Colors.Danger)
+                setStatus("Gagal mengambil data dari server Roblox. Silakan coba lagi.", Colors.Danger)
             end
         end
 
@@ -1223,7 +1252,7 @@ local function executeQuickHop()
         local scannedCount = 0
 
         for page = 1, Config.MaxPages do
-            setStatus(string.format("Memindai halaman cluster %d...", page), Colors.Warning)
+            setStatus(string.format("Memindai cluster server (Halaman %d)...", page), Colors.Warning)
             local result, err = fetchServerPage(cursor, 3)
 
             if not result or not result.data then
@@ -1251,7 +1280,6 @@ local function executeQuickHop()
                 end
             end
 
-            -- If we found at least 1 server strictly matching threshold, we can hop immediately!
             if #matchingServers > 0 then
                 break
             end
@@ -1261,7 +1289,7 @@ local function executeQuickHop()
                 break
             end
 
-            task.wait(0.35 + math.random() * 0.15)
+            task.wait(0.3 + math.random() * 0.15)
         end
 
         table.sort(matchingServers, function(a, b)
@@ -1277,8 +1305,6 @@ local function executeQuickHop()
         if #matchingServers > 0 then
             targetList = matchingServers
         elseif #allEligibleServers > 0 then
-            -- "BAGIANMANAPUN JUGA SC HARUS CARI SERVER SEPI"
-            -- Strict threshold had no servers, but we join the emptiest server available in the whole game!
             targetList = allEligibleServers
             isFallback = true
         end
@@ -1296,19 +1322,26 @@ local function executeQuickHop()
 
         local smallestPlayerCount = targetList[1].playing or 0
         if isFallback then
-            setStatus(string.format("Server %d-%d tidak ada. Menghubungkan ke server paling sepi yang ada (%d pemain)...", Config.MinPlayers, Config.MaxPlayers, smallestPlayerCount), Colors.Accent)
+            setStatus(string.format("Server %d-%d tidak ada. Menghubungkan ke server paling sepi (%d pemain)...", Config.MinPlayers, Config.MaxPlayers, smallestPlayerCount), Colors.Accent)
         else
             setStatus(string.format("Ditemukan server sepi (%d pemain)! Menghubungkan...", smallestPlayerCount), Colors.Success)
         end
 
-        -- Teleport with failover through targetList
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Server Hopper",
+                Text = string.format("Teleporting to instance with %d players...", smallestPlayerCount),
+                Duration = 3
+            })
+        end)
+
         for idx, target in ipairs(targetList) do
             if idx > 1 then
                 setStatus(string.format("Mencoba server cadangan (%d pemain)...", target.playing or 0), Colors.Warning)
             end
 
             local ok = pcall(function()
-                TeleportService:TeleportToPlaceInstance(PlaceId, target.id, LocalPlayer)
+                TeleportService:TeleportToPlaceInstance(tonumber(PlaceId), tostring(target.id), LocalPlayer)
             end)
 
             if ok then
